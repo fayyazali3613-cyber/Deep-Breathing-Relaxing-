@@ -1,0 +1,65 @@
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { 
+    background: #000000; 
+    color: #e0e0e0; 
+    font-family: 'Inter', sans-serif; 
+    margin: 0; 
+    display: flex; 
+    justify-content: center; 
+    height: 100vh;
+    overflow: hidden;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.header { display: flex; flex-direction: column; gap: 15px; }
+.vol-box { display: flex; align-items: center; background: #1a1a1a; padding: 5px 12px; border-radius: 20px; align-self: flex-end; }
+#volSlider { width: 50px; accent-color: #555; }
+#muteBtn { background: none; border: none; color: white; cursor: pointer; }
+
+.presets { display: flex; gap: 5px; justify-content: center; width: 100%; }
+.presets button { 
+    flex: 1;
+    background: #1a1a1a; border: 1px solid #333; color: #aaa; 
+    padding: 8px 2px; border-radius: 12px; font-size: 0.7rem; font-weight: bold;
+}
+
+.visualizer {
+    position: relative;
+    height: 250px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.circle {
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    border: 2px solid #333;
+    border-radius: 50%;
+    background: radial-gradient(circle, #1a1a1a, #000);
+    transition: transform 1s linear;
+}
+.timer-overlay { z-index: 5; text-align: center; }
+#timer-display { font-size: 4rem; margin: 0; font-weight: 200; color: white; }
+#status { text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; color: #888; }
+
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.s-card { background: #111; padding: 12px; border-radius: 18px; text-align: center; border: 1px solid #1a1a1a; }
+.s-card p { margin: 0; font-size: 0.65rem; color: #666; text-transform: uppercase; }
+.s-card b { font-size: 1.3rem; color: white; }
+.s-card span { font-size: 0.7rem; color: #444; }
+input[type="range"] { width: 100%; margin-top: 8px; accent-color: #444; }
+
+.footer-btns { display: flex; gap: 10px; margin-bottom: 5px; }
+button { border: none; cursor: pointer; font-weight: bold; transition: 0.2s; }
+.primary-btn { flex: 2; background: white; color: black; padding: 18px; border-radius: 18px; font-size: 1rem; }
+.secondary-btn { flex: 1; background: #1a1a1a; color: white; padding: 18px; border-radius: 18px; font-size: 0.9rem; }
+button:active { transform: scale(0.95); }

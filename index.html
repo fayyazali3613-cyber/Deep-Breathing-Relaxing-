@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Breathe Black</title>
+    <link rel="stylesheet" href="style.css">
+	<link rel="manifest" href="manifest.json">
+	<meta name="theme-color" content="#000000">
+
+<script>
+  // Registering Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
+</head>
+<body>
+    <audio id="snd-inhale" src="inhale.aac"></audio>
+    <audio id="snd-exhale" src="exhale.aac"></audio>
+    <audio id="snd-pause" src="pause.aac"></audio>
+
+    <div class="app-container">
+        <div class="header">
+            <div class="vol-box">
+                <button id="muteBtn">🔊</button>
+                <input type="range" id="volSlider" min="0" max="1" step="0.1" value="0.5">
+            </div>
+            <div class="presets">
+                <button onclick="setPreset(4,4,4,4,'Stress Relief')">Stress Relief</button>
+                <button onclick="setPreset(4,7,8,0,'Deep Sleep')">Deep Sleep</button>
+                <button onclick="setPreset(5,2,5,2,'Daily Balance')">Daily Balance</button>
+            </div>
+        </div>
+
+        <div class="visualizer">
+            <div id="circle" class="circle"></div>
+            <div class="timer-overlay">
+                <span id="status">Ready</span>
+                <h1 id="timer-display">0</h1>
+            </div>
+        </div>
+
+        <div class="settings-grid">
+            <div class="s-card">
+                <p>Inhale</p>
+                <b id="v1">5</b><span>s</span>
+                <input type="range" id="inhale" min="1" max="30" value="5">
+            </div>
+            <div class="s-card">
+                <p>Hold</p>
+                <b id="v2">5</b><span>s</span>
+                <input type="range" id="holdFull" min="1" max="30" value="5">
+            </div>
+            <div class="s-card">
+                <p>Exhale</p>
+                <b id="v3">5</b><span>s</span>
+                <input type="range" id="exhale" min="1" max="30" value="5">
+            </div>
+            <div class="s-card">
+                <p>Empty</p>
+                <b id="v4">5</b><span>s</span>
+                <input type="range" id="holdEmpty" min="1" max="30" value="5">
+            </div>
+        </div>
+
+        <div class="footer-btns">
+            <button id="mainBtn" class="primary-btn">START</button>
+            <button id="resetBtn" class="secondary-btn">RESTART</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
