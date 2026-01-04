@@ -1,140 +1,242 @@
-let running = false, isPaused = false, currentPhase = 0, timeLeft = 0;
-
-const circle = document.getElementById('circle');
-const timerDisplay = document.getElementById('timer-display');
-const statusText = document.getElementById('status');
-const mainBtn = document.getElementById('mainBtn');
-
-const sounds = {
-    inhale: document.getElementById('snd-inhale'),
-    exhale: document.getElementById('snd-exhale'),
-    pause: document.getElementById('snd-pause')
-};
-
-function playSnd(key) {
-    if (sounds[key]) {
-        sounds[key].currentTime = 0;
-        sounds[key].play().catch(() => {});
-    }
-}
-
-['inhale', 'holdFull', 'exhale', 'holdEmpty'].forEach((id, i) => {
-    document.getElementById(id).oninput = function() {
-        document.getElementById('v' + (i+1)).innerText = this.value;
+document.addEventListener("DOMContentLoaded", function () {
+	// --- SQUARE ROOT FUNCTION ---
+    window.appendSqrt = function() {
+        if (justCalculated) {
+            expression = "";
+            justCalculated = false;
+        }
+        
+        let lastChar = expression.slice(-1);
+        
+        // Agar pehle koi number ya close bracket hai to auto-multiply '*' lagao
+        if (expression !== "" && /[0-9)]/.test(lastChar)) {
+            expression += "*";
+        }
+        
+        expression += "Math.sqrt(";
+        render();
     };
-});
+    const inputDisplay = document.getElementById("input-line");
+    const resultDisplay = document.getElementById("result-line");
+    const bracketColors = ["#000000","#2ecc71", "#3498db", "#e74c3c", "#9b59b6", "#f1c40f"];
+    
+    let expression = ""; 
+    let lastAnswer = ""; 
+    let justCalculated = false;
+    let isPowerMode = false; // Power mode track karne ke liye
 
-function setPreset(inT, hF, exT, hE, name) {
-    document.getElementById('inhale').value = inT;
-    document.getElementById('holdFull').value = hF;
-    document.getElementById('exhale').value = exT;
-    document.getElementById('holdEmpty').value = hE;
-    for(let i=1; i<=4; i++) document.getElementById('v'+i).innerText = [inT, hF, exT, hE][i-1];
-    statusText.innerText = name;
-}
+    // --- RENDER FUNCTION (Superscript Display ke liye) ---
+function render() {
+    let html = "";
+    let stack = [];
+    let i = 0;
 
-async function loop() {
-    const phases = [
-        { n: "Inhale", s: 1.8, id: 'inhale', k: 'inhale' },
-        { n: "Hold", s: 1.8, id: 'holdFull', k: 'pause' },
-        { n: "Exhale", s: 1, id: 'exhale', k: 'exhale' },
-        { n: "Pause", s: 1, id: 'holdEmpty', k: 'pause' }
-    ];
+    while (i < expression.length) {
+        let char = expression[i];
 
-    while (running) {
-        for (let i = currentPhase; i < 4; i++) {
-            if (!running) break;
-            currentPhase = i;
-            let dur = parseInt(document.getElementById(phases[i].id).value);
-            
-            // Skip phase if duration is 0
-            if (dur === 0) continue;
-
-            statusText.innerText = phases[i].n;
-            circle.style.transition = `transform ${dur}s linear`;
-            circle.style.transform = `scale(${phases[i].s})`;
-            playSnd(phases[i].k);
-
-            timeLeft = timeLeft > 0 ? timeLeft : dur;
-            while (timeLeft > 0) {
-                if (!running) return;
-                if (isPaused) {
-                    circle.style.transition = "none";
-                    await new Promise(r => setTimeout(r, 100));
-                    continue;
-                }
-                timerDisplay.innerText = timeLeft;
-                await new Promise(r => setTimeout(r, 1000));
-                timeLeft--;
+        // Power (**) rendering
+        if (expression.substring(i, i + 3) === "**(") {
+            i += 3;
+            let powerContent = "";
+            let depth = 1;
+            while (i < expression.length && depth > 0) {
+                if (expression[i] === "(") depth++;
+                if (expression[i] === ")") depth--;
+                if (depth > 0) powerContent += expression[i];
+                i++;
             }
-            timeLeft = 0;
+            html += `<span class="sup">${powerContent || "^"}</span>`;
+            continue;
         }
-        currentPhase = 0;
-    }
-}
 
-mainBtn.onclick = () => {
-    if (!running) {
-        running = true; isPaused = false;
-        mainBtn.innerText = "PAUSE";
-        loop();
+        // Square Root display
+        if (expression.substring(i, i + 10) === "Math.sqrt(") {
+       html += `<span style="color:red; font-weight: 900; display: inline-block; transform: scale(1.2, 1.1); text-shadow: 0.5px 0 0 red, -0.5px 0 0 red;">√</span>`;
+            i += 9;
+            char = "(";
+        }
+
+        if (char === "(") {
+            let color = bracketColors[stack.length % bracketColors.length];
+            stack.push(color);
+            html += `<span style="color:${color}">(</span>`;
+        } else if (char === ")") {
+            let color = stack.pop() || "#333";
+            html += `<span style="color:${color}">)</span>`;
+        } else {
+            let displayChar = char === "*" ? "×" : (char === "/" ? "÷" : char);
+            html += `<span class="char">${displayChar}</span>`;
+        }
+        i++;
+    }
+
+    inputDisplay.innerHTML = html;
+    setTimeout(() => { inputDisplay.scrollLeft = inputDisplay.scrollWidth; }, 0);
+    
+    // --- YAHAN CHANGE HAI ---
+    if (!justCalculated) {
+        resultDisplay.style.opacity = "0.5";
+        // Jab aap naya kuch type karein, toh "Close bracket" ya purana error hat jaye
+        resultDisplay.innerText = expression === "" ? "0" : ""; 
     } else {
-        isPaused = !isPaused;
-        mainBtn.innerText = isPaused ? "RESUME" : "PAUSE";
-    }
-};
-
-document.getElementById('resetBtn').onclick = () => {
-    running = false; isPaused = false; currentPhase = 0; timeLeft = 0;
-    timerDisplay.innerText = "0";
-    statusText.innerText = "Ready";
-    circle.style.transition = "0.5s";
-    circle.style.transform = "scale(1)";
-    mainBtn.innerText = "START";
-};
-
-// Volume Control
-const volSlider = document.getElementById('volSlider');
-const muteBtn = document.getElementById('muteBtn');
-volSlider.oninput = (e) => Object.values(sounds).forEach(s => s.volume = e.target.value);
-muteBtn.onclick = () => {
-    const isMuted = sounds.inhale.muted = !sounds.inhale.muted;
-    sounds.exhale.muted = sounds.pause.muted = isMuted;
-    muteBtn.innerText = isMuted ? "🔇" : "🔊";
-};
-
-// Screen Wake Lock Variable
-let wakeLock = null;
-
-// Function to keep screen on
-async function requestWakeLock() {
-    try {
-        if ('wakeLock' in navigator) {
-            wakeLock = await navigator.wakeLock.request('screen');
-            console.log('Screen Wake Lock is active');
-            
-            // Agar lock khatam ho jaye (e.g. tab switch karne par), to dobara mangen
-            wakeLock.addEventListener('release', () => {
-                console.log('Screen Wake Lock was released');
-            });
-        }
-    } catch (err) {
-        console.error(`${err.name}, ${err.message}`);
+        resultDisplay.style.opacity = "1";
     }
 }
 
-// Jab Start button dabe, tab screen lock active ho
-const originalStart = mainBtn.onclick;
-mainBtn.onclick = () => {
-    originalStart(); // Purana logic chale
-    if (running) {
-        requestWakeLock();
+    // --- APPEND FUNCTION ---
+window.append = function(value) {
+    if (justCalculated) {
+        expression = (['+', '-', '*', '/', '**'].includes(value)) ? lastAnswer : "";
+        justCalculated = false;
+    }
+
+    let lastChar = expression.slice(-1);
+
+    // 1. START CHECK: Agar screen khali hai, toh sirf '-' ya number/bracket allow ho
+    if (expression === "" && ['+', '*', '/', '**'].includes(value)) return;
+
+    // 2. FIX: Agar start mein sirf '-' hai, toh uske baad koi operator (+, *, /, ^) na aaye
+    if (expression === "-" && ['+', '-', '*', '/', '**'].includes(value)) return;
+
+    // 3. BRACKET CHECK: '(' ke foran baad sirf number ya '-' allow ho
+    if (lastChar === "(" && ['+', '*', '/', '**'].includes(value)) return;
+
+    // 4. Closing bracket logic
+    if (value === ")") {
+        let openBCount = (expression.match(/\(/g) || []).length;
+        let closeBCount = (expression.match(/\)/g) || []).length;
+        if (openBCount <= closeBCount) return; 
+
+        while (['+', '-', '*', '/'].includes(expression.slice(-1))) {
+            expression = expression.slice(0, -1);
+        }
+    }
+
+    // 5. Power (^) Logic
+    if (value === '**') {
+        if (isPowerMode) { exitPower(); return; }
+        if (/[0-9)]/.test(lastChar) && expression !== "") {
+            expression += "**(";
+            isPowerMode = true;
+            render(); return;
+        }
+        return;
+    }
+
+    // 6. Operator Swap Logic (Lekin bracket ya start-minus ke baad swap block)
+    if (['+', '-', '*', '/'].includes(value) && ['+', '-', '*', '/'].includes(lastChar)) {
+        let charBeforeLast = expression.slice(-2, -1);
+        // Agar operator se pehle '(' hai ya screen par sirf operator hi bacha hai
+        if (charBeforeLast === "(" || expression.length === 1) return;
+        expression = expression.slice(0, -1);
+    }
+
+    if (expression === "0" && /[0-9]/.test(value)) expression = "";
+    if (value === "(" && /[0-9)]/.test(lastChar)) expression += "*";
+    if (/[0-9]/.test(value) && lastChar === ")") expression += "*";
+
+    expression += value;
+    render();
+};
+
+
+    // --- EXIT POWER MODE ---
+    window.exitPower = function() {
+        if (isPowerMode) {
+            if (expression.endsWith("**(")) {
+                expression = expression.slice(0, -3);
+            } else {
+                expression += ")"; // Bracket close karke bahar aaye
+            }
+            isPowerMode = false;
+            render();
+        }
+    };
+
+    // --- THEME TOGGLE ---
+    window.toggleTheme = function() {
+        document.body.classList.toggle('light-mode');
+    };
+
+    // --- CALCULATE ---
+ window.calculate = function() {
+    if (expression === "") return;
+    
+    // Power mode khatam karein agar on hai
+    if (isPowerMode) exitPower();
+
+    let tempExpr = expression;
+
+    // Brackets check karein
+    let openB = (tempExpr.match(/\(/g) || []).length;
+    let closeB = (tempExpr.match(/\)/g) || []).length;
+    
+    // AGAR BRACKET CLOSE NAHI HAIN:
+    if (openB > closeB) {
+        resultDisplay.innerText = "Close bracket";
+        resultDisplay.style.opacity = "1";
+        resultDisplay.style.color = "#ff4d4d"; // Thoda red color warning ke liye
+        
+        // 2 second baad wapas normal color kar den
+        setTimeout(() => {
+            resultDisplay.style.color = "#555";
+            if (!justCalculated) resultDisplay.style.opacity = "0.5";
+        }, 2000);
+        
+        return; // Calculation yahin rok den
+    }
+
+    // Baqi purana calculation logic...
+    while (['+', '-', '*', '/'].includes(tempExpr.slice(-1))) {
+        tempExpr = tempExpr.slice(0, -1);
+    }
+
+ try {
+        let result = eval(tempExpr);
+        if (!Number.isInteger(result)) {
+            result = Math.round(result * 100000000) / 100000000;
+        }
+        resultDisplay.innerText = result;
+        lastAnswer = result.toString();
+        justCalculated = true; // Sirf sahi result par ye true hoga
+        render();
+    } catch {
+        // ERROR LOGIC:
+        resultDisplay.innerText = "Error";
+        resultDisplay.style.opacity = "1";
+        
+        // Sabse important: justCalculated ko FALSE rakhein taake 
+        // naya button dabane par purani equation delete na ho
+        justCalculated = false; 
     }
 };
 
-// Jab page dobara visible ho (tab wapis aane par), lock re-activate karein
-document.addEventListener('visibilitychange', async () => {
-    if (wakeLock !== null && document.visibilityState === 'visible') {
-        requestWakeLock();
-    }
+    // --- BACKSPACE & CLEAR ---
+    window.backspace = function() {
+        if (justCalculated) { expression = ""; justCalculated = false; }
+        else {
+            if (expression.endsWith("**(")) { isPowerMode = false; expression = expression.slice(0, -3); }
+            else if (expression.endsWith("Math.sqrt(")) { expression = expression.slice(0, -10); }
+            else { expression = expression.slice(0, -1); }
+        }
+        render();
+    };
+
+    window.clearDisplay = function() {
+        expression = ""; isPowerMode = false; justCalculated = false;
+        resultDisplay.innerText = "0";
+        render();
+    };
+
+    window.useAns = function() { if (lastAnswer) append(lastAnswer); };
+
+    // Keyboard support
+    document.addEventListener("keydown", (e) => {
+        if (/[0-9]/.test(e.key)) append(e.key);
+        if (['+', '-', '*', '/'].includes(e.key)) append(e.key);
+        if (e.key === '^') append('**');
+        if (e.key === 'Enter') { e.preventDefault(); isPowerMode ? exitPower() : calculate(); }
+        if (e.key === 'Backspace') backspace();
+        if (e.key === 'Escape') clearDisplay();
+    });
 });
